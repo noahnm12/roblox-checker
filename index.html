@@ -83,15 +83,18 @@ async function checkAccountAge() {
     resultBox.innerHTML = "⏳ Fetching data...";
     
     try {
-        // Step 1: Convert username to User ID using a public CORS proxy
-        const userUrl = `https://corsproxy.io`;
-        const userResponse = await fetch(userUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usernames: [username], excludeBannedUsers: false })
-        });
+        // Step 1: Convert username to User ID
+        const userUrl = `https://allorigins.win{encodeURIComponent('https://users.roblox.com/v1/usernames/users')}`;
+        const userResponse = await fetch(userUrl);
+        const userRaw = await userResponse.json();
         
-        const userData = await userResponse.json();
+        // Parse the nested proxy data safely
+        const targetUrl = 'https://users.roblox.com/v1/usernames/users';
+        const userPayload = { usernames: [username], excludeBannedUsers: false };
+        
+        const finalUserResponse = await fetch(`https://allorigins.win{encodeURIComponent(targetUrl)}&method=POST&body=${encodeURIComponent(JSON.stringify(userPayload))}`);
+        const finalUserRaw = await finalUserResponse.json();
+        const userData = JSON.parse(finalUserRaw.contents);
         
         if (!userData.data || userData.data.length === 0) {
             resultBox.innerHTML = `❌ Username "${username}" not found.`;
@@ -102,9 +105,10 @@ async function checkAccountAge() {
         const displayName = userData.data[0].displayName;
         
         // Step 2: Fetch profile details using the User ID
-        const profileUrl = `https://corsproxy.io{userId}`;
+        const profileUrl = `https://allorigins.win{encodeURIComponent(`https://roblox.com{userId}`)}`;
         const profileResponse = await fetch(profileUrl);
-        const profileData = await profileResponse.json();
+        const profileRaw = await profileResponse.json();
+        const profileData = JSON.parse(profileRaw.contents);
         
         // Step 3: Calculate the dates
         const createdDate = new Date(profileData.created);
