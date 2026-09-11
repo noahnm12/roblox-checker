@@ -62,8 +62,8 @@
 <body>
 
 <div class="container">
-    <h2>Roblox Age Checker</h2>
-    <input type="text" id="usernameInput" placeholder="Enter Roblox Username...">
+    <h2>Roblox ID Age Checker</h2>
+    <input type="text" id="userIdInput" placeholder="Enter Roblox User ID (Numbers)...">
     <button onclick="checkAccountAge()">Check Account</button>
     
     <div class="result" id="resultBox"></div>
@@ -71,11 +71,11 @@
 
 <script>
 async function checkAccountAge() {
-    const username = document.getElementById('usernameInput').value.trim();
+    const userId = document.getElementById('userIdInput').value.trim();
     const resultBox = document.getElementById('resultBox');
     
-    if (!username) {
-        alert("Please enter a username!");
+    if (!userId || isNaN(userId)) {
+        alert("Please enter a valid numeric Roblox User ID!");
         return;
     }
     
@@ -83,34 +83,20 @@ async function checkAccountAge() {
     resultBox.innerHTML = "⏳ Fetching data...";
     
     try {
-        // Step 1: Convert username to User ID
-        const userUrl = `https://allorigins.win{encodeURIComponent('https://users.roblox.com/v1/usernames/users')}`;
-        const userResponse = await fetch(userUrl);
-        const userRaw = await userResponse.json();
+        // Fetch profile details using the User ID via an open proxy
+        const targetUrl = `https://roblox.com{userId}`;
+        const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
         
-        // Parse the nested proxy data safely
-        const targetUrl = 'https://users.roblox.com/v1/usernames/users';
-        const userPayload = { usernames: [username], excludeBannedUsers: false };
+        const response = await fetch(proxyUrl);
+        const rawData = await response.json();
+        const profileData = JSON.parse(rawData.contents);
         
-        const finalUserResponse = await fetch(`https://allorigins.win{encodeURIComponent(targetUrl)}&method=POST&body=${encodeURIComponent(JSON.stringify(userPayload))}`);
-        const finalUserRaw = await finalUserResponse.json();
-        const userData = JSON.parse(finalUserRaw.contents);
-        
-        if (!userData.data || userData.data.length === 0) {
-            resultBox.innerHTML = `❌ Username "${username}" not found.`;
+        if (profileData.errors) {
+            resultBox.innerHTML = `❌ User ID "${userId}" not found.`;
             return;
         }
         
-        const userId = userData.data[0].id;
-        const displayName = userData.data[0].displayName;
-        
-        // Step 2: Fetch profile details using the User ID
-        const profileUrl = `https://allorigins.win{encodeURIComponent(`https://roblox.com{userId}`)}`;
-        const profileResponse = await fetch(profileUrl);
-        const profileRaw = await profileResponse.json();
-        const profileData = JSON.parse(profileRaw.contents);
-        
-        // Step 3: Calculate the dates
+        // Calculate the dates
         const createdDate = new Date(profileData.created);
         const formattedDate = createdDate.toLocaleDateString('en-US', {
             year: 'numeric', month: 'long', day: 'numeric'
@@ -121,8 +107,7 @@ async function checkAccountAge() {
         
         // Display result
         resultBox.innerHTML = `
-            <strong>👤 Account:</strong> ${displayName} (@${username})<br>
-            <strong>🆔 User ID:</strong> ${userId}<br>
+            <strong>👤 Account:</strong> ${profileData.displayName} (@${profileData.name})<br>
             <strong>📅 Created On:</strong> ${formattedDate}<br>
             <strong>⏳ Account Age:</strong> ${daysOld.toLocaleString()} days old
         `;
