@@ -70,7 +70,7 @@
 </div>
 
 <script>
-async function checkAccountAge() {
+function checkAccountAge() {
     const userId = document.getElementById('userIdInput').value.trim();
     const resultBox = document.getElementById('resultBox');
     
@@ -82,40 +82,36 @@ async function checkAccountAge() {
     resultBox.style.display = "block";
     resultBox.innerHTML = "⏳ Fetching data...";
     
-    try {
-        // Fetch profile details using the User ID via an open proxy
-        const targetUrl = `https://roblox.com{userId}`;
-        const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
-        
-        const response = await fetch(proxyUrl);
-        const rawData = await response.json();
-        const profileData = JSON.parse(rawData.contents);
-        
-        if (profileData.errors) {
-            resultBox.innerHTML = `❌ User ID "${userId}" not found.`;
-            return;
-        }
-        
-        // Calculate the dates
-        const createdDate = new Date(profileData.created);
-        const formattedDate = createdDate.toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric'
+    const targetUrl = "https://roblox.com" + userId;
+    const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
+    
+    fetch(proxyUrl)
+        .then(response => response.json())
+        .then(rawData => {
+            const profileData = JSON.parse(rawData.contents);
+            
+            if (profileData.errors || !profileData.created) {
+                resultBox.innerHTML = "❌ User ID not found.";
+                return;
+            }
+            
+            const createdDate = new Date(profileData.created);
+            const formattedDate = createdDate.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+            
+            const timeDiff = Math.abs(new Date() - createdDate);
+            const daysOld = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            
+            resultBox.innerHTML = 
+                "<strong>👤 Account:</strong> " + profileData.displayName + " (@" + profileData.name + ")<br>" +
+                "<strong>📅 Created On:</strong> " + formattedDate + "<br>" +
+                "<strong>⏳ Account Age:</strong> " + daysOld.toLocaleString() + " days old";
+        })
+        .catch(error => {
+            resultBox.innerHTML = "⚠ Error connecting to Roblox servers.";
+            console.error(error);
         });
-        
-        const timeDiff = Math.abs(new Date() - createdDate);
-        const daysOld = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-        
-        // Display result
-        resultBox.innerHTML = `
-            <strong>👤 Account:</strong> ${profileData.displayName} (@${profileData.name})<br>
-            <strong>📅 Created On:</strong> ${formattedDate}<br>
-            <strong>⏳ Account Age:</strong> ${daysOld.toLocaleString()} days old
-        `;
-        
-    } catch (error) {
-        resultBox.innerHTML = `⚠ Error connecting to Roblox servers.`;
-        console.error(error);
-    }
 }
 </script>
 
