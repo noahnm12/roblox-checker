@@ -80,12 +80,13 @@ function checkAccountAge() {
     }
     
     resultBox.style.display = "block";
-    resultBox.innerHTML = "⏳ Connecting directly to Roblox...";
+    resultBox.innerHTML = "⏳ Fetching details from Roblox servers...";
     
-    // Using the open thumb API route which never blocks web browsers
+    // Using the ultra-stable global CDN edge proxy from CorsProxy.io
     const targetUrl = "https://roblox.com" + userId;
+    const proxyUrl = "https://corsproxy.io" + encodeURIComponent(targetUrl);
     
-    fetch(targetUrl)
+    fetch(proxyUrl)
         .then(response => {
             if (!response.ok) {
                 throw new Error("Profile not found");
@@ -112,8 +113,7 @@ function checkAccountAge() {
                 "<strong>⏳ Account Age:</strong> " + daysOld.toLocaleString() + " days old";
         })
         .catch(error => {
-            // If the browser still forces a block, it cleanly lets the user know to check locally
-            resultBox.innerHTML = "⚠ Browser security block. Double-click the file on your desktop to run it instantly!";
+            resultBox.innerHTML = "⚠ Error connection block. Try refreshing your page.";
             console.error(error);
         });
 }
